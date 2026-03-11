@@ -857,6 +857,9 @@ body {
         <div class="brand-name">Mahraat<span>Board</span></div>
       </div>
       <div class="header-actions">
+        <button class="icon-btn" onclick="exportData()" title="Backup">💾</button>
+        <button class="icon-btn" onclick="document.getElementById('importFile').click()" title="Restore">📂</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
         <button class="icon-btn" onclick="openCatModal()" title="Categories">🗂️</button>
         <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
       </div>
@@ -1110,16 +1113,65 @@ body {
 
 <script>
 // ===== STATE =====
-const STORAGE_KEY = 'mahraat_board_v3';
+const STORAGE_KEY = 'mahraat_board_v4';
 let state = {
-  tasks: [],
+  tasks: [
+    // === NextTable ===
+    {id:'nt1',title:'Core system build (Next.js + Supabase)',category:'c1',status:'doing',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt2',title:'Mobile responsive UI',category:'c1',status:'doing',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt3',title:'Reservation module',category:'c1',status:'doing',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt4',title:'Kitchen management module',category:'c1',status:'pending',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt5',title:'Invoice & billing module',category:'c1',status:'pending',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt6',title:'Dashboard & reports',category:'c1',status:'pending',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt7',title:'Testing & bug fix',category:'c1',status:'pending',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt8',title:'Live deploy (Netlify)',category:'c1',status:'pending',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt9',title:'NextTable Facebook Page খোলা',category:'c1',status:'pending',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt10',title:'WhatsApp Business সেটআপ',category:'c1',status:'pending',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'nt11',title:'Golden Spoon onboard',category:'c1',status:'done',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:'প্রথম NextTable client ✅',createdAt:'2026-03-12',doneDate:'2026-03-12'},
+
+    // === Dragon Footwear ERP ===
+    {id:'df1',title:'Advance payment received',category:'c2',status:'done',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'df2',title:'Requirements analysis complete',category:'c2',status:'done',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'df3',title:'41-table database architecture (V2)',category:'c2',status:'done',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:'Concurrency, audit trail, stored balance সব addressed',createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'df4',title:'GitHub repo setup (dragon-footwear-buddy)',category:'c2',status:'done',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:'Private repo — mahir077',createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'df5',title:'17-phase build roadmap তৈরি',category:'c2',status:'done',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'df6',title:'Inventory management module build',category:'c2',status:'pending',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'df7',title:'Production management module',category:'c2',status:'pending',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'df8',title:'HR & payroll module',category:'c2',status:'pending',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'df9',title:'Sales & distribution module',category:'c2',status:'pending',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'df10',title:'Delivery & final testing',category:'c2',status:'pending',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+
+    // === NextSuite / Cosmetics Mart ===
+    {id:'ns1',title:'NextSuite build with Lovable',category:'c3',status:'done',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'ns2',title:'GitHub secure (mahir077)',category:'c3',status:'done',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'ns3',title:'Quotation MHR-2026-001 পাঠানো',category:'c3',status:'done',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:'Cosmetics Mart, Phulpur, Mymensingh',createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'ns4',title:'5টা known bug fix করা',category:'c3',status:'pending',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:'Production delivery-র আগে করতে হবে',createdAt:'2026-03-12',doneDate:null},
+    {id:'ns5',title:'Cosmetics Mart deal close করা',category:'c3',status:'doing',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:'NextSuite POS + NextERP/OmniSuite',createdAt:'2026-03-12',doneDate:null},
+    {id:'ns6',title:'Production delivery to Cosmetics Mart',category:'c3',status:'pending',priority:'1',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+
+    // === Company Setup ===
+    {id:'cs1',title:'Robi SIM business number সেটআপ',category:'c4',status:'done',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'cs2',title:'Mini Thailand part-time job',category:'c4',status:'done',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:'Interim income চলছে',createdAt:'2026-03-12',doneDate:'2026-03-12'},
+    {id:'cs3',title:'mahraat.com domain setup',category:'c4',status:'pending',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'cs4',title:'mahir@mahraat.com email (Zoho Mail)',category:'c4',status:'pending',priority:'2',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'cs5',title:'Facebook business page — Mahraat IT',category:'c4',status:'pending',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'cs6',title:'Visiting card design & print',category:'c4',status:'pending',priority:'3',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+
+    // === Labs Pipeline ===
+    {id:'lb1',title:'CVZilaa — BD-specific CV builder',category:'c5',status:'pending',priority:'5',deadline:null,timing:null,budget:0,advance:0,note:'Mahraat Labs future product',createdAt:'2026-03-12',doneDate:null},
+    {id:'lb2',title:'BiyaBari — বিয়ে ম্যানেজমেন্ট SaaS',category:'c5',status:'pending',priority:'5',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'lb3',title:'NextFin — Accounting SaaS',category:'c5',status:'pending',priority:'5',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'lb4',title:'StudyFlow — শিক্ষা ম্যানেজমেন্ট',category:'c5',status:'pending',priority:'5',deadline:null,timing:null,budget:0,advance:0,note:null,createdAt:'2026-03-12',doneDate:null},
+    {id:'lb5',title:'NextPOS Offline (HTML single-file)',category:'c5',status:'pending',priority:'4',deadline:null,timing:null,budget:0,advance:0,note:'Production readiness audit: 70/100 — 10-step fix roadmap ready',createdAt:'2026-03-12',doneDate:null},
+  ],
   categories: [
     { id:'c1', name:'NextTable', icon:'🍽️' },
     { id:'c2', name:'Dragon ERP', icon:'👟' },
     { id:'c3', name:'NextSuite', icon:'🛒' },
     { id:'c4', name:'Company Setup', icon:'🏢' },
-    { id:'c5', name:'Personal', icon:'👤' },
-    { id:'c6', name:'Finance', icon:'💰' },
+    { id:'c5', name:'Labs Pipeline', icon:'🧪' },
+    { id:'c6', name:'Personal', icon:'👤' },
+    { id:'c7', name:'Finance', icon:'💰' },
   ],
   activeCategory: 'all',
   theme: 'dark',
@@ -1135,7 +1187,15 @@ let deferredPrompt = null;
 function load() {
   try {
     const d = localStorage.getItem(STORAGE_KEY);
-    if (d) { const p = JSON.parse(d); Object.assign(state, p); }
+    if (d) {
+      const p = JSON.parse(d);
+      if (p.tasks && p.tasks.length > 0) state.tasks = p.tasks;
+      if (p.categories && p.categories.length > 0) state.categories = p.categories;
+      state.activeCategory = p.activeCategory || 'all';
+      state.theme = p.theme || 'dark';
+      state.streak = p.streak || 0;
+      state.lastDoneDate = p.lastDoneDate || null;
+    }
   } catch {}
 }
 function save() {
@@ -1552,6 +1612,61 @@ function renderAll() {
   renderTabs();
   renderStats();
   renderTasks();
+}
+
+
+// ===== EXPORT / IMPORT =====
+function exportData() {
+  const backup = {
+    exported_at: new Date().toISOString(),
+    version: 'mahraat_board_v4',
+    tasks: state.tasks,
+    categories: state.categories,
+    streak: state.streak,
+    lastDoneDate: state.lastDoneDate,
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'mahraat_taskboard_backup_' + date + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Backup নেওয়া হয়েছে!');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.tasks) state.tasks = data.tasks;
+      if (data.categories) state.categories = data.categories;
+      if (data.streak) state.streak = data.streak;
+      if (data.lastDoneDate) state.lastDoneDate = data.lastDoneDate;
+      save();
+      renderAll();
+      showToast('✅ Restore হয়েছে! ' + state.tasks.length + 'টা টাস্ক লোড।');
+    } catch {
+      showToast('❌ ফাইলটা সঠিক না। আবার চেষ্টা করো।');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function showToast(msg) {
+  const existing = document.getElementById('toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'toast';
+  toast.textContent = msg;
+  toast.style.cssText = 'position:fixed;bottom:110px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 20px var(--shadow);';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }
 
 // ===== PWA INSTALL =====
