@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TaskBoard">
+<meta name="theme-color" content="#0a0a0f" id="themeColorMeta">
+<title>Mahraat TaskBoard</title>
+<link rel="manifest" href="./manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== DESIGN TOKENS ===== */
+:root {
+  --font: 'Plus Jakarta Sans', sans-serif;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+
+  /* STATUS COLORS — same in both modes */
+  --c-pending: #f59e0b;
+  --c-pending-bg: rgba(245,158,11,0.12);
+  --c-doing: #3b82f6;
+  --c-doing-bg: rgba(59,130,246,0.12);
+  --c-done: #22c55e;
+  --c-done-bg: rgba(34,197,94,0.12);
+  --c-note: #a855f7;
+  --c-note-bg: rgba(168,85,247,0.12);
+  --c-high: #ef4444;
+  --c-med: #f59e0b;
+  --c-low: #22c55e;
+}
+
+[data-theme="dark"] {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --surface: #16161f;
+  --surface2: #1e1e2a;
+  --border: #252535;
+  --border2: #2e2e42;
+  --text: #e8e8f0;
+  --text2: #9090b0;
+  --text3: #5a5a78;
+  --accent: #6366f1;
+  --accent-soft: rgba(99,102,241,0.15);
+  --white: #ffffff;
+  --shadow: rgba(0,0,0,0.4);
+}
+
+[data-theme="light"] {
+  --bg: #f4f4f8;
+  --bg2: #eaeaf0;
+  --surface: #ffffff;
+  --surface2: #f0f0f7;
+  --border: #e0e0ec;
+  --border2: #d0d0e0;
+  --text: #1a1a2e;
+  --text2: #5a5a78;
+  --text3: #9090b0;
+  --accent: #5558e3;
+  --accent-soft: rgba(85,88,227,0.1);
+  --white: #1a1a2e;
+  --shadow: rgba(0,0,0,0.08);
+}
+
+/* ===== RESET ===== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { font-size: 16px; height: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ===== LAYOUT ===== */
+.app { max-width: 480px; margin: 0 auto; padding-bottom: 100px; }
+
+/* ===== HEADER ===== */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-logo {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.brand-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.brand-name span { color: var(--accent); }
+
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
+.icon-btn {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); }
+
+/* ===== CATEGORY TABS ===== */
+.tabs-wrap {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+}
+.tabs-wrap::-webkit-scrollbar { display: none; }
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  width: max-content;
+}
+
+.tab {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.tab:not(.active):hover { border-color: var(--border2); color: var(--text); }
+.tab-count {
+  background: rgba(255,255,255,0.2);
+  padding: 1px 5px;
+  border-radius: 10px;
+  font-size: 10px;
+}
+.tab:not(.active) .tab-count {
+  background: var(--surface2);
+  color: var(--text3);
+}
+
+/* ===== STATS GRID ===== */
+.stats-section { padding: 16px 20px 0; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+}
+.stat-card.green::before { background: var(--c-done); }
+.stat-card.amber::before { background: var(--c-pending); }
+.stat-card.blue::before { background: var(--c-doing); }
+.stat-card.purple::before { background: var(--c-note); }
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.stat-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+
+/* PROGRESS RING */
+.progress-ring-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.ring-container { position: relative; flex-shrink: 0; }
+.ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ring-pct {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.ring-small { font-size: 10px; color: var(--text3); }
+
+.ring-info { flex: 1; }
+.ring-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.ring-rows { display: flex; flex-direction: column; gap: 5px; }
+.ring-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.ring-row-label { color: var(--text2); }
+.ring-row-val { font-weight: 700; color: var(--text); }
+
+/* BILLIONAIRE BAR */
+.billionaire-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.billionaire-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.billionaire-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.billionaire-pct {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.billionaire-bar-bg {
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.billionaire-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent), #a855f7);
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.billionaire-note {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* ===== TASKS ===== */
+.tasks-section { padding: 16px 20px 0; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.add-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.add-btn:active { transform: translateY(0); }
+
+/* TASK CARD */
+.task-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 8px;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+  animation: slideIn 0.2s ease;
+}
+@keyframes slideIn {
+  from { opacity:0; transform:translateY(8px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.task-card:hover { border-color: var(--border2); }
+.task-card.done-card { opacity: 0.6; }
+
+.task-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.task-priority-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.pri-1 { background: var(--c-high); box-shadow: 0 0 6px var(--c-high); }
+.pri-2 { background: var(--c-med); }
+.pri-3 { background: var(--c-low); }
+.pri-4 { background: var(--text3); }
+.pri-5 { background: var(--border2); }
+
+.task-main { flex: 1; min-width: 0; }
+.task-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+  word-break: break-word;
+  line-height: 1.4;
+}
+.task-card.done-card .task-title {
+  text-decoration: line-through;
+  color: var(--text3);
+}
+.task-category-badge {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 500;
+}
+
+.task-status-btn {
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.s-pending { background: var(--c-pending-bg); color: var(--c-pending); }
+.s-doing { background: var(--c-doing-bg); color: var(--c-doing); }
+.s-done { background: var(--c-done-bg); color: var(--c-done); }
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.meta-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--surface2);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text2);
+  font-weight: 500;
+}
+.meta-chip.deadline-near { background: rgba(239,68,68,0.1); color: #ef4444; }
+.meta-chip.deadline-today { background: rgba(245,158,11,0.1); color: #f59e0b; }
+
+.task-note-text {
+  font-size: 12px;
+  color: var(--text3);
+  background: var(--surface2);
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  border-left: 2px solid var(--c-note);
+}
+
+.task-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.task-budget {
+  font-size: 11px;
+  color: var(--text3);
+  display: flex;
+  gap: 8px;
+}
+.budget-adv { color: var(--c-done); font-weight: 600; }
+
+.task-actions { display: flex; gap: 4px; }
+.task-action-btn {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.task-action-btn:hover { background: var(--surface2); color: var(--text); }
+.task-action-btn.del:hover { background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 40px; margin-bottom: 10px; }
+.empty-text { font-size: 14px; font-weight: 500; }
+.empty-sub { font-size: 12px; margin-top: 4px; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  padding: 20px 20px 40px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow-y: auto;
+  transform: translateY(40px);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-handle {
+  width: 36px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 20px;
+  letter-spacing: -0.3px;
+}
+
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font);
+  font-weight: 500;
+  outline: none;
+  transition: border-color var(--transition);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-input::placeholder, .form-textarea::placeholder { color: var(--text3); }
+.form-textarea { resize: none; min-height: 80px; line-height: 1.5; }
+.form-select { cursor: pointer; }
+.form-select option { background: var(--surface); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.form-actions { display: flex; gap: 8px; margin-top: 20px; }
+.btn-primary {
+  flex: 1;
+  padding: 13px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-cancel {
+  padding: 13px 20px;
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-cancel:hover { border-color: var(--border2); color: var(--text); }
+
+/* CATEGORY MODAL */
+.cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.cat-chip-btn {
+  padding: 10px 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+  display: flex; flex-direction: column; gap: 4px; align-items: center;
+}
+.cat-chip-btn .cat-icon { font-size: 18px; }
+.cat-chip-btn.selected { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.cat-chip-btn:not(.selected):hover { border-color: var(--border2); }
+
+.new-cat-row { display: flex; gap: 8px; }
+.new-cat-row .form-input { flex:1; }
+.new-cat-btn {
+  padding: 11px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+.new-cat-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px 0 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  font-family: var(--font);
+}
+.nav-item.active { color: var(--accent); }
+.nav-item:hover { color: var(--text2); }
+.nav-icon { font-size: 20px; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* FAB */
+.fab {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 52px; height: 52px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+  z-index: 99;
+}
+.fab:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 6px 24px rgba(99,102,241,0.5); }
+.fab:active { transform: translateY(0) scale(0.98); }
+
+/* ===== PAGES ===== */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ===== TODAY PAGE ===== */
+.today-header {
+  padding: 20px 20px 0;
+  margin-bottom: 16px;
+}
+.today-greeting {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.4px;
+  margin-bottom: 2px;
+}
+.today-date { font-size: 13px; color: var(--text3); font-weight: 500; }
+
+.today-quick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 0 20px;
+  margin-bottom: 16px;
+}
+.quick-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 10px;
+  text-align: center;
+}
+.quick-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.quick-label { font-size: 10px; color: var(--text3); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.quick-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+/* DEADLINE SECTION */
+.deadline-section { padding: 0 20px; margin-bottom: 16px; }
+.deadline-card {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.deadline-icon { font-size: 20px; }
+.deadline-info { flex: 1; }
+.deadline-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.deadline-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.deadline-days {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+}
+
+/* INSTALL BANNER */
+.install-banner {
+  margin: 12px 20px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  display: none;
+}
+.install-banner.show { display: flex; }
+.install-text { flex: 1; font-size: 12px; color: var(--text); font-weight: 500; }
+.install-btn {
+  padding: 6px 12px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+}
+.install-close {
+  color: var(--text3);
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* STREAK */
+.streak-row {
+  padding: 0 20px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+.streak-card {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.streak-icon { font-size: 22px; }
+.streak-val { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; line-height:1; }
+.streak-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* ===== SVG RING ===== */
+.svg-ring { transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--surface2); }
+.ring-prog { fill: none; stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-logo">✅</div>
+        <div class="brand-name">Mahraat<span>Board</span></div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="openCatModal()" title="Categories">🗂️</button>
+        <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
+      </div>
+    </div>
+    <!-- Category tabs -->
+    <div class="tabs-wrap">
+      <div class="tabs" id="tabsContainer"></div>
+    </div>
+  </div>
+
+  <!-- INSTALL BANNER -->
+  <div class="install-banner" id="installBanner">
+    <span>📲</span>
+    <div class="install-text">মোবাইলে ইনস্টল করো — home screen-এ যোগ হবে!</div>
+    <button class="install-btn" id="installBtn">Install</button>
+    <button class="install-close" onclick="document.getElementById('installBanner').classList.remove('show')">✕</button>
+  </div>
+
+  <!-- PAGE: TODAY (Dashboard) -->
+  <div class="page active" id="page-today">
+    <div class="today-header">
+      <div class="today-greeting" id="greeting">আস্সালামু আলাইকুম, Mahir! 👋</div>
+      <div class="today-date" id="todayDate"></div>
+    </div>
+
+    <div class="today-quick">
+      <div class="quick-card">
+        <div class="quick-val" id="qdToday">0</div>
+        <div class="quick-label">আজ সম্পন্ন</div>
+      </div>
+      <div class="quick-card">
+        <div class="quick-val" id="qdYest">0</div>
+        <div class="quick-label">গতকাল</div>
+      </div>
+      <div class="quick-card">
+        <div class="quick-val" id="qdPending">0</div>
+        <div class="quick-label">পেন্ডিং</div>
+      </div>
+    </div>
+
+    <div class="streak-row">
+      <div class="streak-card">
+        <div class="streak-icon">🔥</div>
+        <div>
+          <div class="streak-val" id="streakVal">0</div>
+          <div class="streak-label">দিনের streak</div>
+        </div>
+      </div>
+      <div class="streak-card">
+        <div class="streak-icon">⚡</div>
+        <div>
+          <div class="streak-val" id="completionRate">0%</div>
+          <div class="streak-label">Completion rate</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deadline alerts -->
+    <div id="deadlineAlerts" class="deadline-section"></div>
+
+    <div class="stats-section">
+      <!-- Progress ring -->
+      <div class="progress-ring-wrap">
+        <div class="ring-container">
+          <svg width="80" height="80" class="svg-ring">
+            <circle class="ring-bg" cx="40" cy="40" r="32" stroke-width="6"/>
+            <circle class="ring-prog" id="ringProgress" cx="40" cy="40" r="32" stroke-width="6"
+              stroke-dasharray="201" stroke-dashoffset="201"/>
+          </svg>
+          <div class="ring-text">
+            <div class="ring-pct" id="ringPct">0%</div>
+            <div class="ring-small">done</div>
+          </div>
+        </div>
+        <div class="ring-info">
+          <div class="ring-title">Overall Progress</div>
+          <div class="ring-rows">
+            <div class="ring-row">
+              <span class="ring-row-label">🟢 সম্পন্ন</span>
+              <span class="ring-row-val" id="statDone">0</span>
+            </div>
+            <div class="ring-row">
+              <span class="ring-row-label">🔵 চলমান</span>
+              <span class="ring-row-val" id="statDoing">0</span>
+            </div>
+            <div class="ring-row">
+              <span class="ring-row-label">🟡 পেন্ডিং</span>
+              <span class="ring-row-val" id="statPending">0</span>
+            </div>
+            <div class="ring-row">
+              <span class="ring-row-label">📋 মোট</span>
+              <span class="ring-row-val" id="statTotal">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Billionaire meter -->
+      <div class="billionaire-card">
+        <div class="billionaire-header">
+          <div class="billionaire-title">💎 Billionaire Work %</div>
+          <div class="billionaire-pct" id="billPct">0%</div>
+        </div>
+        <div class="billionaire-bar-bg">
+          <div class="billionaire-bar-fill" id="billBar" style="width:0%"></div>
+        </div>
+        <div class="billionaire-note" id="billNote">প্রতিদিন কাজ করো, বিলিওনিয়ার হওয়ার পথে এগোও 🚀</div>
+      </div>
+
+      <!-- Budget stats -->
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-label">মোট বাজেট</div>
+          <div class="stat-value" id="totalBudget">৳0</div>
+          <div class="stat-sub">সব প্রজেক্ট</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Advance পাওয়া</div>
+          <div class="stat-value" id="totalAdvance">৳0</div>
+          <div class="stat-sub">মোট received</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">বাকি পাবো</div>
+          <div class="stat-value" id="totalDue">৳0</div>
+          <div class="stat-sub">Due amount</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">High Priority</div>
+          <div class="stat-value" id="highPriCount">0</div>
+          <div class="stat-sub">জরুরি টাস্ক</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: TASKS -->
+  <div class="page" id="page-tasks">
+    <div class="tasks-section">
+      <div class="section-header">
+        <div class="section-title" id="tasksPageTitle">সব টাস্ক</div>
+        <button class="add-btn" onclick="openAddModal()">+ নতুন</button>
+      </div>
+      <div id="taskList"></div>
+    </div>
+  </div>
+
+</div><!-- end .app -->
+
+<!-- FAB -->
+<button class="fab" onclick="openAddModal()" id="fab">+</button>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="switchPage('today',this)">
+    <div class="nav-icon">📊</div>
+    <div class="nav-label">Dashboard</div>
+  </button>
+  <button class="nav-item" onclick="switchPage('tasks',this)">
+    <div class="nav-icon">✅</div>
+    <div class="nav-label">Tasks</div>
+  </button>
+</div>
+
+<!-- ADD/EDIT TASK MODAL -->
+<div class="modal-overlay" id="taskModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">নতুন টাস্ক</div>
+
+    <div class="form-group">
+      <label class="form-label">টাস্কের নাম *</label>
+      <input class="form-input" id="fTitle" placeholder="কী করতে হবে?">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">ক্যাটাগরি</label>
+      <select class="form-select" id="fCategory"></select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">স্ট্যাটাস</label>
+        <select class="form-select" id="fStatus">
+          <option value="pending">🟡 পেন্ডিং</option>
+          <option value="doing">🔵 চলমান</option>
+          <option value="done">🟢 সম্পন্ন</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority (1=সর্বোচ্চ)</label>
+        <select class="form-select" id="fPriority">
+          <option value="1">🔴 1 — Critical</option>
+          <option value="2">🟠 2 — High</option>
+          <option value="3" selected>🟡 3 — Medium</option>
+          <option value="4">🟢 4 — Low</option>
+          <option value="5">⚪ 5 — Someday</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Deadline</label>
+        <input class="form-input" type="date" id="fDeadline">
+      </div>
+      <div class="form-group">
+        <label class="form-label">সময় লাগবে</label>
+        <input class="form-input" id="fTiming" placeholder="যেমন: ২ ঘন্টা">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">বাজেট (৳)</label>
+        <input class="form-input" type="number" id="fBudget" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Advance পাওয়া (৳)</label>
+        <input class="form-input" type="number" id="fAdvance" placeholder="0">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">নোট</label>
+      <textarea class="form-textarea" id="fNote" placeholder="বিস্তারিত লিখুন..."></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="document.getElementById('taskModal').classList.remove('open')">বাদ দাও</button>
+      <button class="btn-primary" onclick="saveTask()">সেভ করো ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-overlay" id="catModal" onclick="closeCatModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">ক্যাটাগরি ম্যানেজ করো</div>
+    <div class="cat-grid" id="catGrid"></div>
+    <div class="new-cat-row">
+      <input class="form-input" id="newCatName" placeholder="নতুন ক্যাটাগরির নাম">
+      <input class="form-input" style="width:60px" id="newCatIcon" placeholder="🏷️" maxlength="4">
+      <button class="new-cat-btn" onclick="addCategory()">+ যোগ</button>
+    </div>
+    <div class="form-actions" style="margin-top:14px">
+      <button class="btn-primary" onclick="document.getElementById('catModal').classList.remove('open')">Done ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const STORAGE_KEY = 'mahraat_board_v3';
+let state = {
+  tasks: [],
+  categories: [
+    { id:'c1', name:'NextTable', icon:'🍽️' },
+    { id:'c2', name:'Dragon ERP', icon:'👟' },
+    { id:'c3', name:'NextSuite', icon:'🛒' },
+    { id:'c4', name:'Company Setup', icon:'🏢' },
+    { id:'c5', name:'Personal', icon:'👤' },
+    { id:'c6', name:'Finance', icon:'💰' },
+  ],
+  activeCategory: 'all',
+  theme: 'dark',
+  streak: 0,
+  lastDoneDate: null,
+  doneToday: 0,
+  doneYesterday: 0,
+};
+let editId = null;
+let deferredPrompt = null;
+
+// ===== LOAD/SAVE =====
+function load() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) { const p = JSON.parse(d); Object.assign(state, p); }
+  } catch {}
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+}
+
+// ===== THEME =====
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  save();
+}
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme);
+  document.getElementById('themeBtn').textContent = state.theme === 'dark' ? '☀️' : '🌙';
+  const meta = document.getElementById('themeColorMeta');
+  meta.content = state.theme === 'dark' ? '#0a0a0f' : '#f4f4f8';
+}
+
+// ===== UID =====
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ===== DATE HELPERS =====
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function yesterdayStr() {
+  const d = new Date(); d.setDate(d.getDate()-1);
+  return d.toISOString().slice(0,10);
+}
+function daysUntil(dateStr) {
+  const d = new Date(dateStr); const t = new Date();
+  t.setHours(0,0,0,0); d.setHours(0,0,0,0);
+  return Math.round((d-t)/(1000*60*60*24));
+}
+function fmtDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('bn-BD', { day:'numeric', month:'short', year:'numeric' });
+}
+function fmtBDT(n) {
+  if (!n) return '৳0';
+  return '৳' + Number(n).toLocaleString('bn-BD');
+}
+
+// ===== STREAK =====
+function updateStreak() {
+  const today = todayStr();
+  const hasDoneToday = state.tasks.some(t => t.doneDate === today);
+  if (hasDoneToday && state.lastDoneDate !== today) {
+    const yest = yesterdayStr();
+    state.streak = (state.lastDoneDate === yest) ? state.streak + 1 : 1;
+    state.lastDoneDate = today;
+    save();
+  }
+}
+
+// ===== TABS =====
+function renderTabs() {
+  const container = document.getElementById('tabsContainer');
+  const cats = [{id:'all', name:'সব', icon:'📋'}, ...state.categories];
+  container.innerHTML = '';
+  cats.forEach(c => {
+    const count = c.id === 'all'
+      ? state.tasks.filter(t => t.status !== 'done').length
+      : state.tasks.filter(t => t.category === c.id && t.status !== 'done').length;
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (state.activeCategory === c.id ? ' active' : '');
+    btn.innerHTML = `${c.icon} ${c.name} <span class="tab-count">${count}</span>`;
+    btn.onclick = () => { state.activeCategory = c.id; save(); renderTabs(); renderTasks(); };
+    container.appendChild(btn);
+  });
+}
+
+// ===== TASKS =====
+function getFilteredTasks() {
+  let tasks = [...state.tasks];
+  if (state.activeCategory !== 'all') {
+    tasks = tasks.filter(t => t.category === state.activeCategory);
+  }
+  // sort: priority asc, then by deadline
+  tasks.sort((a,b) => {
+    const pa = parseInt(a.priority)||3, pb = parseInt(b.priority)||3;
+    if (pa !== pb) return pa - pb;
+    if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+    if (a.deadline) return -1; if (b.deadline) return 1;
+    return 0;
+  });
+  return tasks;
+}
+
+function getCatName(catId) {
+  if (!catId) return '';
+  const c = state.categories.find(x => x.id === catId);
+  return c ? c.icon + ' ' + c.name : '';
+}
+
+function renderTasks() {
+  const list = document.getElementById('taskList');
+  const title = document.getElementById('tasksPageTitle');
+  const tasks = getFilteredTasks();
+
+  if (state.activeCategory === 'all') title.textContent = 'সব টাস্ক';
+  else {
+    const c = state.categories.find(x => x.id === state.activeCategory);
+    title.textContent = c ? c.icon + ' ' + c.name : 'টাস্ক';
+  }
+
+  if (!tasks.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">কোনো টাস্ক নেই</div><div class="empty-sub">+ নতুন বাটনে ক্লিক করো</div></div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  tasks.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'task-card' + (t.status === 'done' ? ' done-card' : '');
+
+    // deadline chip
+    let deadlineChip = '';
+    if (t.deadline) {
+      const days = daysUntil(t.deadline);
+      if (days < 0) deadlineChip = `<div class="meta-chip deadline-near">⚠️ ${Math.abs(days)}d overdue</div>`;
+      else if (days === 0) deadlineChip = `<div class="meta-chip deadline-today">🔔 আজই deadline</div>`;
+      else if (days <= 3) deadlineChip = `<div class="meta-chip deadline-near">⏰ ${days}d বাকি</div>`;
+      else deadlineChip = `<div class="meta-chip">📅 ${fmtDate(t.deadline)}</div>`;
+    }
+
+    const timingChip = t.timing ? `<div class="meta-chip">⏱️ ${t.timing}</div>` : '';
+
+    const statusLabels = { pending:'🟡 পেন্ডিং', doing:'🔵 চলমান', done:'🟢 সম্পন্ন' };
+    const statusClass = { pending:'s-pending', doing:'s-doing', done:'s-done' };
+
+    const priClass = ['','pri-1','pri-2','pri-3','pri-4','pri-5'][parseInt(t.priority)||3];
+
+    const noteHtml = t.note ? `<div class="task-note-text">💬 ${t.note}</div>` : '';
+
+    const budgetHtml = (t.budget || t.advance) ? `
+      <div class="task-budget">
+        ${t.budget ? `<span>💰 ${fmtBDT(t.budget)}</span>` : ''}
+        ${t.advance ? `<span class="budget-adv">✅ Advance: ${fmtBDT(t.advance)}</span>` : ''}
+        ${(t.budget && t.advance) ? `<span>🔜 Due: ${fmtBDT(t.budget - t.advance)}</span>` : ''}
+      </div>` : '';
+
+    card.innerHTML = `
+      <div class="task-card-top">
+        <div class="task-priority-dot ${priClass}"></div>
+        <div class="task-main">
+          <div class="task-title">${t.title}</div>
+          <div class="task-category-badge">${getCatName(t.category)}</div>
+        </div>
+        <button class="task-status-btn ${statusClass[t.status]}" onclick="cycleStatus('${t.id}')">${statusLabels[t.status]}</button>
+      </div>
+      ${(deadlineChip || timingChip) ? `<div class="task-meta">${deadlineChip}${timingChip}</div>` : ''}
+      ${noteHtml}
+      <div class="task-footer">
+        ${budgetHtml || '<div></div>'}
+        <div class="task-actions">
+          <button class="task-action-btn" onclick="openEditModal('${t.id}')" title="Edit">✏️</button>
+          <button class="task-action-btn del" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function cycleStatus(id) {
+  const t = state.tasks.find(x => x.id === id);
+  if (!t) return;
+  const cycle = { pending:'doing', doing:'done', done:'pending' };
+  t.status = cycle[t.status];
+  if (t.status === 'done') { t.doneDate = todayStr(); }
+  updateStreak(); save(); renderAll();
+}
+
+function deleteTask(id) {
+  if (!confirm('এই টাস্ক মুছে দেবো?')) return;
+  state.tasks = state.tasks.filter(x => x.id !== id);
+  save(); renderAll();
+}
+
+// ===== MODAL =====
+function openAddModal() {
+  editId = null;
+  document.getElementById('modalTitle').textContent = 'নতুন টাস্ক';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fNote').value = '';
+  document.getElementById('fDeadline').value = '';
+  document.getElementById('fTiming').value = '';
+  document.getElementById('fBudget').value = '';
+  document.getElementById('fAdvance').value = '';
+  document.getElementById('fStatus').value = 'pending';
+  document.getElementById('fPriority').value = '3';
+  populateCatSelect();
+  document.getElementById('taskModal').classList.add('open');
+  setTimeout(() => document.getElementById('fTitle').focus(), 300);
+}
+
+function openEditModal(id) {
+  const t = state.tasks.find(x => x.id === id);
+  if (!t) return;
+  editId = id;
+  document.getElementById('modalTitle').textContent = 'টাস্ক এডিট করো';
+  document.getElementById('fTitle').value = t.title;
+  document.getElementById('fNote').value = t.note || '';
+  document.getElementById('fDeadline').value = t.deadline || '';
+  document.getElementById('fTiming').value = t.timing || '';
+  document.getElementById('fBudget').value = t.budget || '';
+  document.getElementById('fAdvance').value = t.advance || '';
+  document.getElementById('fStatus').value = t.status;
+  document.getElementById('fPriority').value = t.priority || '3';
+  populateCatSelect(t.category);
+  document.getElementById('taskModal').classList.add('open');
+}
+
+function populateCatSelect(selected) {
+  const sel = document.getElementById('fCategory');
+  sel.innerHTML = '<option value="">— ক্যাটাগরি নেই —</option>';
+  state.categories.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = c.icon + ' ' + c.name;
+    if (selected === c.id) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  if (!selected && state.activeCategory !== 'all') sel.value = state.activeCategory;
+}
+
+function saveTask() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { document.getElementById('fTitle').focus(); return; }
+
+  const taskData = {
+    title,
+    category: document.getElementById('fCategory').value || null,
+    status: document.getElementById('fStatus').value,
+    priority: document.getElementById('fPriority').value,
+    deadline: document.getElementById('fDeadline').value || null,
+    timing: document.getElementById('fTiming').value.trim() || null,
+    budget: parseFloat(document.getElementById('fBudget').value) || 0,
+    advance: parseFloat(document.getElementById('fAdvance').value) || 0,
+    note: document.getElementById('fNote').value.trim() || null,
+  };
+
+  if (editId) {
+    const idx = state.tasks.findIndex(x => x.id === editId);
+    if (idx !== -1) {
+      if (taskData.status === 'done' && state.tasks[idx].status !== 'done') taskData.doneDate = todayStr();
+      state.tasks[idx] = { ...state.tasks[idx], ...taskData };
+    }
+  } else {
+    const t = { id: uid(), createdAt: todayStr(), doneDate: null, ...taskData };
+    if (t.status === 'done') t.doneDate = todayStr();
+    state.tasks.push(t);
+  }
+
+  updateStreak(); save();
+  document.getElementById('taskModal').classList.remove('open');
+  renderAll();
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('taskModal')) {
+    document.getElementById('taskModal').classList.remove('open');
+  }
+}
+
+// ===== CATEGORY MODAL =====
+function openCatModal() {
+  renderCatGrid();
+  document.getElementById('catModal').classList.add('open');
+}
+function closeCatModal(e) {
+  if (e.target === document.getElementById('catModal')) {
+    document.getElementById('catModal').classList.remove('open');
+    renderTabs(); renderTasks();
+  }
+}
+function renderCatGrid() {
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = '';
+  state.categories.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-chip-btn';
+    btn.innerHTML = `<span class="cat-icon">${c.icon}</span>${c.name}`;
+    btn.onclick = () => deleteCategory(c.id);
+    btn.title = 'ক্লিক করলে মুছে যাবে';
+    grid.appendChild(btn);
+  });
+}
+function addCategory() {
+  const name = document.getElementById('newCatName').value.trim();
+  const icon = document.getElementById('newCatIcon').value.trim() || '📌';
+  if (!name) return;
+  state.categories.push({ id: uid(), name, icon });
+  document.getElementById('newCatName').value = '';
+  document.getElementById('newCatIcon').value = '';
+  save(); renderCatGrid();
+}
+function deleteCategory(id) {
+  if (!confirm('এই ক্যাটাগরি মুছবো? টাস্কগুলো থাকবে।')) return;
+  state.categories = state.categories.filter(x => x.id !== id);
+  state.tasks.forEach(t => { if (t.category === id) t.category = null; });
+  if (state.activeCategory === id) state.activeCategory = 'all';
+  save(); renderCatGrid();
+}
+
+// ===== STATS =====
+function renderStats() {
+  const today = todayStr(), yest = yesterdayStr();
+  const all = state.tasks;
+  const done = all.filter(t => t.status === 'done');
+  const doing = all.filter(t => t.status === 'doing');
+  const pending = all.filter(t => t.status === 'pending');
+  const doneToday = all.filter(t => t.doneDate === today).length;
+  const doneYest = all.filter(t => t.doneDate === yest).length;
+  const pct = all.length ? Math.round(done.length / all.length * 100) : 0;
+
+  // quick stats
+  el('qdToday', doneToday);
+  el('qdYest', doneYest);
+  el('qdPending', pending.length);
+
+  // ring
+  const circ = 201;
+  const offset = circ - (circ * pct / 100);
+  document.getElementById('ringProgress').style.strokeDashoffset = offset;
+  el('ringPct', pct + '%');
+  el('statDone', done.length);
+  el('statDoing', doing.length);
+  el('statPending', pending.length);
+  el('statTotal', all.length);
+
+  // streak / completion
+  el('streakVal', state.streak || 0);
+  el('completionRate', pct + '%');
+
+  // billionaire: weighted by priority + tasks done today
+  const billScore = Math.min(100, Math.round(
+    (pct * 0.4) +
+    (Math.min(doneToday, 10) * 6) +
+    (state.streak * 2)
+  ));
+  el('billPct', billScore + '%');
+  document.getElementById('billBar').style.width = billScore + '%';
+  const billNotes = [
+    'শুরু করো — প্রথম পদক্ষেপটাই সবচেয়ে গুরুত্বপূর্ণ 🚶',
+    'ভালো শুরু! চালিয়ে যাও 💪',
+    'অর্ধেক পথ পার! এগিয়ে যাও 🔥',
+    'দারুণ! বিলিওনিয়ারের মতো কাজ করছো 💎',
+    'অসাধারণ! তুমি আজ beast mode-এ আছো 🏆'
+  ];
+  el('billNote', billNotes[Math.floor(billScore/25)] || billNotes[3]);
+
+  // budget
+  let totalBudget = 0, totalAdv = 0;
+  all.forEach(t => { totalBudget += (t.budget||0); totalAdv += (t.advance||0); });
+  el('totalBudget', fmtBDT(totalBudget));
+  el('totalAdvance', fmtBDT(totalAdv));
+  el('totalDue', fmtBDT(totalBudget - totalAdv));
+
+  // high priority
+  el('highPriCount', all.filter(t => t.priority <= 2 && t.status !== 'done').length);
+
+  // deadline alerts
+  const alerts = all.filter(t => t.deadline && t.status !== 'done' && daysUntil(t.deadline) <= 3)
+    .sort((a,b) => a.deadline.localeCompare(b.deadline)).slice(0,3);
+  const alertDiv = document.getElementById('deadlineAlerts');
+  alertDiv.innerHTML = '';
+  alerts.forEach(t => {
+    const days = daysUntil(t.deadline);
+    const d = document.createElement('div');
+    d.className = 'deadline-card';
+    d.style.marginBottom = '8px';
+    d.innerHTML = `
+      <div class="deadline-icon">${days < 0 ? '🚨' : days === 0 ? '🔔' : '⏰'}</div>
+      <div class="deadline-info">
+        <div class="deadline-title">${t.title}</div>
+        <div class="deadline-sub">${getCatName(t.category)} • ${fmtDate(t.deadline)}</div>
+      </div>
+      <div class="deadline-days">${days < 0 ? Math.abs(days)+'d late' : days === 0 ? 'আজই!' : days+'d left'}</div>
+    `;
+    alertDiv.appendChild(d);
+  });
+}
+
+function el(id, val) {
+  const e = document.getElementById(id);
+  if (e) e.textContent = val;
+}
+
+// ===== DATE/GREETING =====
+function setDateGreeting() {
+  const now = new Date();
+  const h = now.getHours();
+  const greet = h < 5 ? 'রাত জেগে কাজ, Mahir! 🌙' :
+                h < 12 ? 'সুপ্রভাত, Mahir! 🌅' :
+                h < 17 ? 'শুভ অপরাহ্ন, Mahir! ☀️' :
+                h < 20 ? 'শুভ সন্ধ্যা, Mahir! 🌆' : 'শুভ রাত্রি, Mahir! 🌙';
+  el('greeting', greet);
+  el('todayDate', now.toLocaleDateString('bn-BD', { weekday:'long', year:'numeric', month:'long', day:'numeric' }));
+}
+
+// ===== PAGE SWITCH =====
+function switchPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('fab').style.display = name === 'tasks' ? 'flex' : 'none';
+  if (name === 'tasks') renderTasks();
+}
+
+// ===== RENDER ALL =====
+function renderAll() {
+  renderTabs();
+  renderStats();
+  renderTasks();
+}
+
+// ===== PWA INSTALL =====
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBanner').classList.remove('show');
+});
+
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// ===== INIT =====
+load();
+applyTheme();
+setDateGreeting();
+document.getElementById('fab').style.display = 'none'; // start on dashboard
+renderAll();
+</script>
+</body>
+</html>
